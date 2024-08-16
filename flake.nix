@@ -2,15 +2,10 @@
   description = "Description for the project";
 
   inputs = {
-    devenv-root = {
-      url = "file+file:///dev/null";
-      flake = false;
-    };
     nixpkgs.url = "github:cachix/devenv-nixpkgs/rolling";
     devenv.url = "github:cachix/devenv";
-    nix2container.url = "github:nlewo/nix2container";
-    nix2container.inputs.nixpkgs.follows = "nixpkgs";
-    mk-shell-bin.url = "github:rrbutani/nix-mk-shell-bin";
+    devenv.inputs.nixpkgs.follows = "nixpkgs";
+    systems.url = "github:nix-systems/default";
   };
 
   nixConfig = {
@@ -18,52 +13,34 @@
     extra-substituters = "https://devenv.cachix.org";
   };
 
-  outputs = inputs@{ flake-parts, devenv-root, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      imports = [
-        inputs.devenv.flakeModule
-      ];
-      systems = [ "x86_64-linux" "i686-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
+  outputs = inputs @ {
+    self,
+    nixpkgs,
+    devenv,
+    systems,
+    ...
+  }: let
+    forEachSystem = nixpkgs.lib.genAttrs (import systems);
+  in {
+    packages = forEachSystem (system: {
+      devenv-up = self.devShells.${system}.default.config.procfileScript;
+    });
 
-      perSystem = { config, self', inputs', pkgs, system, ... }: {
-        # Per-system attributes can be defined here. The self' and inputs'
-        # module parameters provide easy access to attributes of the same
-        # system.
+    devShells =
+      forEachSystem
+      (system: let
+        pkgs = nixpkgs.legacyPackages.${system};
+      in {
+        default = devenv.lib.mkShell {
+          inherit inputs pkgs;
+          modules = [
+            {
+              packages = with pkgs; [libGL.dev libGLU.dev glew.dev freeglut.dev];
 
-        # Equivalent to  inputs'.nixpkgs.legacyPackages.hello;
-        packages.default = pkgs.hello;
-
-        devenv.shells.default = {
-          devenv.root =
-            let
-              devenvRootFileContent = builtins.readFile devenv-root.outPath;
-            in
-            pkgs.lib.mkIf (devenvRootFileContent != "") devenvRootFileContent;
-
-          name = "my-project";
-
-          imports = [
-            # This is just like the imports in devenv.nix.
-            # See https://devenv.sh/guides/using-with-flake-parts/#import-a-devenv-module
-            # ./devenv-foo.nix
+              languages.haskell.enable = true;
+            }
           ];
-
-          # https://devenv.sh/reference/options/
-          packages = [ config.packages.default ];
-
-          enterShell = ''
-          '';
-
-          processes.hello.exec = "hello";
-
-          languages.haskell.enable = true;
         };
-
-      };
-      flake = {
-        # The usual flake attributes can be defined here, including system-
-        # agnostic ones like nixosModule and system-enumerating ones, although
-        # those are more easily expressed in perSystem.
-      };
-    };
+      });
+  };
 }

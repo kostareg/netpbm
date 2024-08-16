@@ -77,6 +77,16 @@ library
     -- Base language which the package is written in.
     default-language: Haskell2010
 
+executable netpbm
+    hs-source-dirs: bin
+    main-is: Main.hs
+    extra-libraries: glut GLEW
+    build-depends:    megaparsec^>=9.6.1
+                    , gloss ^>=1.13.0.1
+                    , text^>=2.1.1 
+                    , base ^>=4.18.2.0
+                    , netpbm
+
 test-suite netpbm-test
     -- Import common warning flags.
     import:           warnings
@@ -101,5 +111,10 @@ test-suite netpbm-test
 
     -- Test dependencies.
     build-depends:
+        tasty ^>=1.5,
+        tasty-hspec ^>=1.2.0.4,
+        hspec ^>=2.11.9,
+        hspec-megaparsec ^>=2.2.1,
+        megaparsec^>=9.6.1,
         base ^>=4.18.2.0,
         netpbm

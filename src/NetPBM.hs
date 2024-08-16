@@ -1,6 +1,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+-- TODO: is this the right module name?
 module NetPBM where
 
 import Data.Text (Text)
@@ -59,7 +60,7 @@ pPPM = do
   h <- decimal      <?> "height"
   _ <- space
   m <- decimal      <?> "maximum value"
-  _ <- char '\n'
+  _ <- space
   r <- pRaster
   _ <- eof
   return (PPM n w h m r)
