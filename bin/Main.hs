@@ -1,9 +1,9 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+import qualified Data.ByteString as BS
 import Data.Function (on)
 import Data.List (foldl')
-import qualified Data.Text.IO as TIO
 import Graphics.Gloss
 import NetPBM
 import Text.Megaparsec
@@ -39,7 +39,7 @@ render raster width maxval = translate (-150) 150 $ foldl' render' Blank $ zip [
 
 main :: IO ()
 main = do
-  content <- TIO.readFile "./examples/P3/smiley-20x.ppm"
+  content <- BS.readFile "./examples/P6/dog.ppm"
   case runParser pPPM "smiley.ppm" content of
     Left err -> Prelude.putStrLn $ errorBundlePretty err
     Right PPM {raster, width, maxval} -> do
